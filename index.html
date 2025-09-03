@@ -115,6 +115,9 @@
 
 <body>
 	<div class="container">
+		<button id="installBtn"
+			style="display:flex; margin-bottom:15px; padding:10px 20px; background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer;">Instalar
+			aplicación</button>
 		<h1>Agenda Semanal</h1>
 		<form id="activityForm">
 			<select id="day" required>
@@ -134,6 +137,24 @@
 		<div class="agenda" id="agenda"></div>
 	</div>
 	<script>
+		// Botón de instalación PWA
+		let deferredPrompt;
+		const installBtn = document.getElementById('installBtn');
+		window.addEventListener('beforeinstallprompt', (e) => {
+			e.preventDefault();
+			deferredPrompt = e;
+			installBtn.style.display = 'block';
+		});
+		installBtn.addEventListener('click', async () => {
+			if (deferredPrompt) {
+				deferredPrompt.prompt();
+				const { outcome } = await deferredPrompt.userChoice;
+				if (outcome === 'accepted') {
+					installBtn.style.display = 'none';
+				}
+				deferredPrompt = null;
+			}
+		});
 		const form = document.getElementById('activityForm');
 		const agendaDiv = document.getElementById('agenda');
 		let agenda = {};
