@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Agenda Semanal</title>
+	<link rel="manifest" href="/manifest.json">
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background: #f4f4f4;
+		}
+
+		.container {
+			max-width: 600px;
+			margin: 30px auto;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			padding: 20px;
+		}
+
+		h1 {
+			text-align: center;
+			color: #333;
+		}
+
+		form {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-bottom: 20px;
+		}
+
+		form select,
+		form input[type="time"],
+		form input[type="text"] {
+			flex: 1 1 120px;
+			padding: 8px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+		}
+
+		form button {
+			padding: 8px 16px;
+			background: #007bff;
+			color: #fff;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background 0.2s;
+		}
+
+		form button:hover {
+			background: #0056b3;
+		}
+
+		.agenda {
+			width: 100%;
+		}
+
+		.day {
+			margin-bottom: 18px;
+		}
+
+		.day h2 {
+			font-size: 1.1em;
+			color: #007bff;
+			margin-bottom: 6px;
+		}
+
+		.activity {
+			background: #e9ecef;
+			margin-bottom: 5px;
+			padding: 7px 10px;
+			border-radius: 4px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.activity span {
+			font-size: 0.98em;
+		}
+
+		.delete-btn {
+			background: #dc3545;
+			color: #fff;
+			border: none;
+			border-radius: 3px;
+			padding: 2px 8px;
+			cursor: pointer;
+			font-size: 0.9em;
+		}
+
+		.delete-btn:hover {
+			background: #b52a37;
+		}
+
+		@media (max-width: 600px) {
+			.container {
+				padding: 10px;
+			}
+
+			form {
+				flex-direction: column;
+				gap: 8px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<h1>Agenda Semanal</h1>
+		<form id="activityForm">
+			<select id="day" required>
+				<option value="">Día</option>
+				<option value="Lunes">Lunes</option>
+				<option value="Martes">Martes</option>
+				<option value="Miércoles">Miércoles</option>
+				<option value="Jueves">Jueves</option>
+				<option value="Viernes">Viernes</option>
+				<option value="Sábado">Sábado</option>
+				<option value="Domingo">Domingo</option>
+			</select>
+			<input type="time" id="hour" required>
+			<input type="text" id="activity" placeholder="Actividad" required>
+			<button type="submit">Agregar</button>
+		</form>
+		<div class="agenda" id="agenda"></div>
+	</div>
+	<script>
+		const form = document.getElementById('activityForm');
+		const agendaDiv = document.getElementById('agenda');
+		let agenda = {};
+
+		// Cargar agenda de localStorage si existe
+		if (localStorage.getItem('agenda')) {
+			agenda = JSON.parse(localStorage.getItem('agenda'));
+		}
+
+		function renderAgenda() {
+			agendaDiv.innerHTML = '';
+			const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+			days.forEach(day => {
+				const activities = agenda[day] || [];
+				const dayDiv = document.createElement('div');
+				dayDiv.className = 'day';
+				const h2 = document.createElement('h2');
+				h2.textContent = day;
+				dayDiv.appendChild(h2);
+				if (activities.length === 0) {
+					const empty = document.createElement('div');
+					empty.textContent = 'Sin actividades';
+					empty.style.color = '#888';
+					dayDiv.appendChild(empty);
+				} else {
+					// Ordenar por hora
+					activities.sort((a, b) => a.hour.localeCompare(b.hour));
+					activities.forEach((act, idx) => {
+						const actDiv = document.createElement('div');
+						actDiv.className = 'activity';
+						actDiv.innerHTML = `<span><b>${act.hour}</b> - ${act.text}</span> <button class="delete-btn" data-day="${day}" data-idx="${idx}">Eliminar</button>`;
+						dayDiv.appendChild(actDiv);
+					});
+				}
+				agendaDiv.appendChild(dayDiv);
+			});
+		}
+
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
+			const day = document.getElementById('day').value;
+			const hour = document.getElementById('hour').value;
+			const text = document.getElementById('activity').value.trim();
+			if (!agenda[day]) agenda[day] = [];
+			agenda[day].push({ hour, text });
+			localStorage.setItem('agenda', JSON.stringify(agenda));
+			renderAgenda();
+			form.reset();
+		});
+
+		agendaDiv.addEventListener('click', function (e) {
+			if (e.target.classList.contains('delete-btn')) {
+				const day = e.target.getAttribute('data-day');
+				const idx = e.target.getAttribute('data-idx');
+				agenda[day].splice(idx, 1);
+				localStorage.setItem('agenda', JSON.stringify(agenda));
+				renderAgenda();
+			}
+		});
+
+		renderAgenda();
+	</script>
+	<script src="./js/register-sw.js"></script>
+</body>
+
+</html>
